@@ -1,148 +1,587 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Ruang Curhat</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: 20px auto;
-      padding: 0 15px;
-      background: #f5f3f7;
-    }
-    h1 {
-      color: #4a4458;
-      font-size: 22px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruang Curhat — Board</title>
+<style>
+  :root{
+    --kertas: #eef0e6;
+    --kertas-garis: rgba(60,70,50,0.08);
+    --tinta: #2f3b2f;
+    --tinta-muda: #5a6b57;
+    --aksen: #7c8f5f;
+    --aksen-gelap: #5c6d46;
+    --sticky: #f6dd8c;
+    --sticky-border: #d9bd5f;
+    --merah: #b5533c;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #dfe3d3;
+    margin: 0;
+    padding: 18px;
+    color: var(--tinta);
+  }
+  .wrap{ max-width: 900px; margin: 0 auto; }
+  h1{
+    font-size: 20px;
+    margin: 0 0 2px 0;
+    font-weight: 700;
+  }
+  .sub{
+    font-size: 13px;
+    color: var(--tinta-muda);
+    margin: 0 0 14px 0;
+  }
 
-    /* Kotak tempat pesan-pesan muncul */
-    #chat-box {
-      background: white;
-      border-radius: 10px;
-      padding: 15px;
-      height: 400px;
-      overflow-y: auto; /* bisa di-scroll kalau pesan banyak */
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+  /* ===== Toolbar ===== */
+  .toolbar{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .grp{
+    display: flex;
+    gap: 6px;
+    background: #fff;
+    padding: 5px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  button{
+    font-family: inherit;
+    font-size: 13px;
+    border: none;
+    background: transparent;
+    padding: 7px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--tinta);
+  }
+  button:hover{ background: #f0f0f0; }
+  button.active{
+    background: var(--aksen);
+    color: white;
+  }
+  button.panggil{
+    background: var(--aksen-gelap);
+    color: white;
+    font-weight: 600;
+  }
+  button.panggil:hover{ background: var(--aksen); }
+  button.bahaya{ color: var(--merah); }
+  .swatch{
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  .swatch.active{ border-color: var(--tinta); }
 
-    /* Style dasar untuk setiap gelembung pesan */
-    .bubble {
-      padding: 10px 14px;
-      border-radius: 16px;
-      max-width: 75%;
-      line-height: 1.4;
-    }
+  /* ===== Board ===== */
+  #board-holder{
+    position: relative;
+    width: 100%;
+    height: 62vh;
+    min-height: 420px;
+    background-color: var(--kertas);
+    background-image: radial-gradient(var(--kertas-garis) 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
+  }
+  #draw-canvas{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #board-holder.mode-gambar #draw-canvas{ pointer-events: auto; cursor: crosshair; }
+  #board-holder:not(.mode-gambar) #draw-canvas{ pointer-events: none; }
 
-    /* Pesan dari kamu -> rata kanan, warna ungu */
-    .bubble.user {
-      align-self: flex-end;
-      background: #6c5b8c;
-      color: white;
-    }
+  #board-holder.mode-tulis{ cursor: text; }
 
-    /* Pesan dari bot -> rata kiri, warna abu muda */
-    .bubble.bot {
-      align-self: flex-start;
-      background: #eee;
-      color: #333;
-    }
+  .kosong-hint{
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    color: var(--tinta-muda);
+    font-size: 13px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0.7;
+    max-width: 260px;
+  }
 
-    /* Baris input di bawah */
-    #input-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
+  /* ===== Catatan (note) ===== */
+  .note{
+    position: absolute;
+    min-width: 140px;
+    max-width: 260px;
+    background: #fffef7;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    z-index: 5;
+  }
+  .note-handle{
+    height: 16px;
+    background: rgba(0,0,0,0.04);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 4px;
+    border-radius: 8px 8px 0 0;
+  }
+  .note-handle:active{ cursor: grabbing; }
+  .note-hapus{
+    font-size: 11px;
+    color: var(--tinta-muda);
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+  }
+  .note-hapus:hover{ color: var(--merah); }
+  .note-isi{
+    padding: 10px 10px 12px 10px;
+    font-size: 14px;
+    line-height: 1.4;
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .note-isi:empty::before{
+    content: attr(data-placeholder);
+    color: #bbb;
+  }
 
-    #user-input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      font-size: 15px;
-    }
+  /* ===== Komentar AI (sticky note) ===== */
+  .ai-note{
+    position: absolute;
+    max-width: 210px;
+    background: var(--sticky);
+    border: 1px solid var(--sticky-border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transform: rotate(var(--rot, -2deg));
+    z-index: 8;
+    animation: muncul 0.35s ease-out;
+  }
+  @keyframes muncul{
+    from{ opacity: 0; transform: rotate(var(--rot,-2deg)) translateY(6px) scale(0.95); }
+    to{ opacity: 1; transform: rotate(var(--rot,-2deg)) translateY(0) scale(1); }
+  }
+  .ai-note .tutup{
+    position: absolute;
+    top: 2px; right: 6px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.4);
+    cursor: pointer;
+  }
+  .ai-note .tutup:hover{ color: rgba(0,0,0,0.8); }
+  .ai-note .label{
+    font-size: 10px;
+    text-transform: none;
+    color: rgba(0,0,0,0.45);
+    margin-bottom: 3px;
+    font-weight: 600;
+  }
 
-    #send-btn {
-      padding: 10px 18px;
-      border-radius: 20px;
-      border: none;
-      background: #6c5b8c;
-      color: white;
-      font-size: 15px;
-      cursor: pointer;
-    }
-  </style>
+  footer{
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--tinta-muda);
+  }
+</style>
 </head>
 <body>
+<div class="wrap">
 
-  <h1>Ruang Curhat 📝</h1>
+  <h1>Ruang Curhat — Board 📌</h1>
+  <p class="sub">Tulis, gambar, petakan pikiranmu. Diam sejenak, dan seseorang akan menanggapi — atau panggil langsung kapan pun kamu mau.</p>
 
-  <div id="chat-box"></div>
-
-  <div id="input-row">
-    <input type="text" id="user-input" placeholder="Tulis apa yang kamu rasakan...">
-    <button id="send-btn">Kirim</button>
+  <div class="toolbar">
+    <div class="grp">
+      <button id="btn-tulis" class="active">✏️ Tulis</button>
+      <button id="btn-gambar">🖊️ Coret</button>
+    </div>
+    <div class="grp" id="warna-grp">
+      <!-- warna pena diisi lewat JS -->
+    </div>
+    <div class="grp">
+      <button id="btn-hapus-coretan">Hapus coretan</button>
+      <button id="btn-hapus-semua" class="bahaya">Bersihkan board</button>
+    </div>
+    <div class="grp">
+      <button id="btn-panggil" class="panggil">💬 Panggil</button>
+    </div>
   </div>
 
-  <script>
-    // ====== INI BAGIAN YANG BISA KAMU CUSTOM ======
-    // Tambah, hapus, atau ubah kalimat di bawah ini sesuka kamu.
-    const respons = [
-      "Terima kasih sudah cerita ya. Aku di sini dengerin kamu 💜",
-      "Kamu sudah berjuang keras hari ini, dan itu berarti banget.",
-      "Wajar kok ngerasa begitu. Pelan-pelan aja, nggak usah buru-buru.",
-      "Semangat! Satu langkah kecil hari ini tetap langkah maju.",
-      "Aku bangga sama kamu karena mau nulis dan ngungkapin ini.",
-      "Istirahat sejenak juga nggak apa-apa, kamu berhak tenang."
-    ];
-    // ================================================
+  <div id="board-holder" class="mode-tulis">
+    <canvas id="draw-canvas"></canvas>
+    <div class="kosong-hint" id="hint">Klik dua kali di area ini untuk mulai menulis</div>
+  </div>
 
-    const chatBox = document.getElementById('chat-box');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
+  <footer>Semua berjalan di browser kamu sendiri — tidak ada data yang dikirim ke mana pun. Logika "AI"-nya ada di bagian <code>OTAK_AI</code> pada kode, tinggal kamu edit.</footer>
+</div>
 
-    // Fungsi untuk menambahkan satu gelembung pesan ke layar
-    function tambahPesan(teks, jenis) {
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble ' + jenis; // jenis = 'user' atau 'bot'
-      bubble.textContent = teks;
-      chatBox.appendChild(bubble);
-      chatBox.scrollTop = chatBox.scrollHeight; // auto scroll ke bawah
+<script>
+/* =====================================================================
+   BAGIAN INI YANG BISA KAMU KEMBANGKAN SENDIRI.
+   Ini "otak" AI-nya: aturan kata kunci -> daftar respons.
+   Semua murni logika buatanmu sendiri, tidak ada koneksi ke server/API
+   manapun. Silakan tambah, hapus, atau ubah sesuka hati.
+===================================================================== */
+const OTAK_AI = {
+  // Setiap entri: kumpulan kata kunci (huruf kecil) dan daftar respons.
+  // Kalau tulisan di board mengandung salah satu kata kunci, salah satu
+  // respons di baliknya akan dipilih secara acak.
+  aturan: [
+    {
+      kata: ["capek", "cape", "lelah", "lelah banget", "penat"],
+      respons: [
+        "Kedengarannya kamu sudah banyak menahan hari ini. Boleh lho berhenti sejenak.",
+        "Capek itu sinyal, bukan kelemahan. Istirahat dulu nggak apa-apa.",
+        "Kamu sudah jalan jauh. Sejenak duduk juga bagian dari perjalanan."
+      ]
+    },
+    {
+      kata: ["takut", "cemas", "khawatir", "was-was", "gelisah"],
+      respons: [
+        "Wajar merasa takut soal ini. Coba tulis, sebenarnya apa yang paling kamu khawatirkan?",
+        "Rasa cemas sering terasa lebih besar dari kenyataannya. Pelan-pelan dipetakan aja.",
+        "Kamu nggak harus punya semua jawaban sekarang."
+      ]
+    },
+    {
+      kata: ["bingung", "buntu", "nggak tau harus gimana", "stuck"],
+      respons: [
+        "Kalau lagi buntu, coba tulis dulu semua pilihan yang ada — nggak perlu urut.",
+        "Bingung itu tanda kamu lagi mikir serius, bukan tanda gagal.",
+        "Mungkin belum saatnya diputuskan. Petakan dulu, keputusan bisa nyusul."
+      ]
+    },
+    {
+      kata: ["marah", "kesal", "sebel", "emosi", "geram"],
+      respons: [
+        "Boleh banget marah. Coba tulis apa yang bikin kesal, biar nggak numpuk di dada.",
+        "Kemarahan biasanya nunjukkin ada batas kamu yang dilanggar. Itu penting dikenali.",
+        "Ambil napas dulu. Tulisanmu ini tempat aman buat semua rasa itu keluar."
+      ]
+    },
+    {
+      kata: ["sedih", "nangis", "kecewa", "hancur", "down"],
+      respons: [
+        "Aku di sini nemenin kamu nulis ini. Nggak perlu buru-buru baikan.",
+        "Kecewa itu berat. Terima kasih sudah mau menuliskannya di sini.",
+        "Sedih boleh ada selama perlu. Kamu nggak sendirian nuliskan ini."
+      ]
+    },
+    {
+      kata: ["senang", "bahagia", "bersyukur", "lega", "bangga"],
+      respons: [
+        "Ikut senang bacanya! Momen kayak gini layak dicatat.",
+        "Rasa syukur kecil kayak gini yang bikin hari terasa ringan.",
+        "Bangga sama kamu. Simpan rasa ini baik-baik."
+      ]
     }
+  ],
 
-    // Fungsi untuk memilih satu respon acak dari daftar
-    function ambilResponAcak() {
-      const index = Math.floor(Math.random() * respons.length);
-      return respons[index];
+  // Kalau tidak ada kata kunci yang cocok, salah satu dari sini dipakai.
+  umum: [
+    "Aku di sini, terus tulis aja apa yang ada di kepala.",
+    "Nggak perlu rapi, tulis aja dulu semua yang muncul.",
+    "Terima kasih sudah menuliskan ini di board.",
+    "Pelan-pelan aja, ambil waktu kamu.",
+    "Aku lihat kamu lagi memetakan sesuatu. Lanjutkan, aku menyimak."
+  ]
+};
+
+/* Berapa lama (ms) board harus "diam" sebelum AI otomatis berkomentar */
+const JEDA_DIAM_MS = 4000;
+
+/* =====================================================================
+   BAGIAN MESIN / TEKNIS — biasanya tidak perlu diubah kecuali kamu
+   ingin mengubah cara board dan gambar bekerja.
+===================================================================== */
+const boardHolder = document.getElementById('board-holder');
+const canvas = document.getElementById('draw-canvas');
+const ctx = canvas.getContext('2d');
+const hint = document.getElementById('hint');
+const warnaGrp = document.getElementById('warna-grp');
+
+let mode = 'tulis'; // 'tulis' | 'gambar'
+let penaWarna = '#2f3b2f';
+let idleTimer = null;
+let noteCounter = 0;
+let posisiTerakhir = { x: 40, y: 40 };
+const riwayatKomentar = new Map(); // note.id -> hash teks terakhir yg sudah dikomentari
+
+function resizeCanvas(){
+  const rect = boardHolder.getBoundingClientRect();
+  const data = ctx.getImageData(0,0,canvas.width,canvas.height);
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  ctx.putImageData(data, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ---------- Palet warna pena ----------
+const paletWarna = ['#2f3b2f', '#b5533c', '#3d5a80', '#8a5a44'];
+paletWarna.forEach((warna, i) => {
+  const b = document.createElement('button');
+  b.className = 'swatch' + (i === 0 ? ' active' : '');
+  b.style.background = warna;
+  b.addEventListener('click', () => {
+    penaWarna = warna;
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    b.classList.add('active');
+  });
+  warnaGrp.appendChild(b);
+});
+
+// ---------- Ganti mode ----------
+const btnTulis = document.getElementById('btn-tulis');
+const btnGambar = document.getElementById('btn-gambar');
+
+function setMode(m){
+  mode = m;
+  boardHolder.classList.toggle('mode-gambar', m === 'gambar');
+  boardHolder.classList.toggle('mode-tulis', m === 'tulis');
+  btnTulis.classList.toggle('active', m === 'tulis');
+  btnGambar.classList.toggle('active', m === 'gambar');
+}
+btnTulis.addEventListener('click', () => setMode('tulis'));
+btnGambar.addEventListener('click', () => setMode('gambar'));
+
+// ---------- Menggambar bebas ----------
+let sedangGambar = false;
+let titikTerakhir = null;
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (mode !== 'gambar') return;
+  sedangGambar = true;
+  const rect = canvas.getBoundingClientRect();
+  titikTerakhir = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!sedangGambar) return;
+  const rect = canvas.getBoundingClientRect();
+  const titik = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  ctx.strokeStyle = penaWarna;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(titikTerakhir.x, titikTerakhir.y);
+  ctx.lineTo(titik.x, titik.y);
+  ctx.stroke();
+  titikTerakhir = titik;
+});
+window.addEventListener('pointerup', () => { sedangGambar = false; });
+
+document.getElementById('btn-hapus-coretan').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+
+// ---------- Membuat catatan (note) ----------
+boardHolder.addEventListener('dblclick', (e) => {
+  if (mode !== 'tulis') return;
+  if (e.target.closest('.note') || e.target.closest('.ai-note')) return;
+  const rect = boardHolder.getBoundingClientRect();
+  buatCatatan(e.clientX - rect.left, e.clientY - rect.top, '');
+});
+
+function sembunyikanHint(){
+  hint.style.display = 'none';
+}
+
+function buatCatatan(x, y, teksAwal){
+  sembunyikanHint();
+  noteCounter++;
+  const id = 'note-' + noteCounter;
+
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.id = id;
+  note.style.left = x + 'px';
+  note.style.top = y + 'px';
+
+  const handle = document.createElement('div');
+  handle.className = 'note-handle';
+  const hapus = document.createElement('span');
+  hapus.className = 'note-hapus';
+  hapus.textContent = '✕';
+  hapus.addEventListener('click', () => note.remove());
+  handle.appendChild(hapus);
+
+  const isi = document.createElement('div');
+  isi.className = 'note-isi';
+  isi.contentEditable = 'true';
+  isi.dataset.placeholder = 'Tulis di sini...';
+  isi.textContent = teksAwal || '';
+
+  isi.addEventListener('input', () => {
+    posisiTerakhir = { x: parseFloat(note.style.left) + note.offsetWidth, y: parseFloat(note.style.top) };
+    jadwalkanKomentarOtomatis();
+  });
+  isi.addEventListener('mousedown', () => bawaKeDepan(note));
+
+  note.appendChild(handle);
+  note.appendChild(isi);
+  boardHolder.appendChild(note);
+  aktifkanDrag(note, handle);
+  isi.focus();
+}
+
+function bawaKeDepan(el){
+  el.style.zIndex = 10;
+  document.querySelectorAll('.note, .ai-note').forEach(n => { if (n !== el) n.style.zIndex = n.classList.contains('ai-note') ? 8 : 5; });
+}
+
+function aktifkanDrag(el, handleEl){
+  let seret = false, offX = 0, offY = 0;
+  handleEl.addEventListener('pointerdown', (e) => {
+    seret = true;
+    bawaKeDepan(el);
+    const rect = el.getBoundingClientRect();
+    offX = e.clientX - rect.left;
+    offY = e.clientY - rect.top;
+    handleEl.setPointerCapture(e.pointerId);
+  });
+  handleEl.addEventListener('pointermove', (e) => {
+    if (!seret) return;
+    const boardRect = boardHolder.getBoundingClientRect();
+    let nx = e.clientX - boardRect.left - offX;
+    let ny = e.clientY - boardRect.top - offY;
+    el.style.left = Math.max(0, nx) + 'px';
+    el.style.top = Math.max(0, ny) + 'px';
+  });
+  handleEl.addEventListener('pointerup', () => { seret = false; });
+}
+
+document.getElementById('btn-hapus-semua').addEventListener('click', () => {
+  document.querySelectorAll('.note, .ai-note').forEach(n => n.remove());
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hint.style.display = 'block';
+  riwayatKomentar.clear();
+});
+
+// ---------- Mesin AI berbasis aturan ----------
+function ambilSemuaTeks(){
+  return Array.from(document.querySelectorAll('.note-isi')).map(n => ({
+    id: n.closest('.note').id,
+    teks: n.textContent.trim()
+  })).filter(n => n.teks.length > 0);
+}
+
+function pilihAcak(arr){
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function hashSederhana(str){
+  let h = 0;
+  for (let i = 0; i < str.length; i++){ h = (h * 31 + str.charCodeAt(i)) | 0; }
+  return h;
+}
+
+// paksa = true kalau dipanggil manual lewat tombol "Panggil" (selalu jawab)
+function jalankanAnalisa(paksa){
+  const semuaNote = ambilSemuaTeks();
+  if (semuaNote.length === 0){
+    if (paksa) tampilkanKomentarAI(pilihAcak(OTAK_AI.umum), posisiTerakhir);
+    return;
+  }
+
+  // Cari catatan yang isinya berubah sejak terakhir dikomentari
+  let target = null;
+  for (const n of semuaNote){
+    const h = hashSederhana(n.teks);
+    if (riwayatKomentar.get(n.id) !== h){
+      target = n;
+      if (!paksa) riwayatKomentar.set(n.id, h);
+      break;
     }
+  }
+  // Kalau tidak dipaksa dan tidak ada yang baru, tidak usah komentar
+  if (!target && !paksa) return;
+  if (!target) target = semuaNote[semuaNote.length - 1];
+  if (paksa) riwayatKomentar.set(target.id, hashSederhana(target.teks));
 
-    // Fungsi utama: dijalankan saat user kirim pesan
-    function kirimPesan() {
-      const teks = userInput.value.trim();
-      if (teks === '') return; // kalau kosong, jangan lakukan apa-apa
-
-      tambahPesan(teks, 'user');
-      userInput.value = ''; // kosongkan kotak input
-
-      // Beri jeda sedikit biar terasa natural, lalu tampilkan respon
-      setTimeout(() => {
-        tambahPesan(ambilResponAcak(), 'bot');
-      }, 600);
+  const teksLower = target.teks.toLowerCase();
+  let respons = null;
+  for (const aturan of OTAK_AI.aturan){
+    if (aturan.kata.some(k => teksLower.includes(k))){
+      respons = pilihAcak(aturan.respons);
+      break;
     }
+  }
+  if (!respons) respons = pilihAcak(OTAK_AI.umum);
 
-    // Jalankan kirimPesan() saat tombol diklik
-    sendBtn.addEventListener('click', kirimPesan);
+  const noteEl = document.getElementById(target.id);
+  let posisi = posisiTerakhir;
+  if (noteEl){
+    posisi = {
+      x: parseFloat(noteEl.style.left) + noteEl.offsetWidth + 12,
+      y: parseFloat(noteEl.style.top)
+    };
+  }
+  tampilkanKomentarAI(respons, posisi);
+}
 
-    // Jalankan kirimPesan() juga saat tekan Enter di keyboard
-    userInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        kirimPesan();
-      }
-    });
-  </script>
+function jadwalkanKomentarOtomatis(){
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => jalankanAnalisa(false), JEDA_DIAM_MS);
+}
 
+function tampilkanKomentarAI(teks, posisi){
+  const boardRect = boardHolder.getBoundingClientRect();
+  let x = posisi.x, y = posisi.y;
+  // pastikan tetap di dalam board
+  x = Math.min(Math.max(10, x), boardRect.width - 220);
+  y = Math.min(Math.max(10, y), boardRect.height - 90);
+
+  const note = document.createElement('div');
+  note.className = 'ai-note';
+  note.style.left = x + 'px';
+  note.style.top = y + 'px';
+  note.style.setProperty('--rot', (Math.random() * 4 - 2) + 'deg');
+
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = 'catatan';
+
+  const tutup = document.createElement('span');
+  tutup.className = 'tutup';
+  tutup.textContent = '✕';
+  tutup.addEventListener('click', () => note.remove());
+
+  const isi = document.createElement('div');
+  isi.textContent = teks;
+
+  note.appendChild(tutup);
+  note.appendChild(label);
+  note.appendChild(isi);
+  boardHolder.appendChild(note);
+}
+
+// ---------- Tombol "Panggil" — jawab instan kapan pun ditekan ----------
+document.getElementById('btn-panggil').addEventListener('click', () => {
+  clearTimeout(idleTimer);
+  jalankanAnalisa(true);
+});
+</script>
 </body>
 </html>
