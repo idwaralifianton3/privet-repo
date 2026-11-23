@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'moli_logic.dart';
+
+void main() => runApp(const MoliApp());
+
+class MoliApp extends StatelessWidget {
+  const MoliApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Moli',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
+        colorScheme: const ColorScheme.dark(
+          primary: Colors.white,
+          surface: Colors.black,
+        ),
+      ),
+      home: const ChatPage(),
+    );
+  }
+}
+
+class _Pesan {
+  final String teks;
+  final bool dariSaya;
+  const _Pesan(this.teks, this.dariSaya);
+}
+
+class ChatPage extends StatefulWidget {
+  const ChatPage({super.key});
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  final _input = TextEditingController();
+  final _scroll = ScrollController();
+  final List<_Pesan> _pesan = [
+    const _Pesan('Hai, aku Moli. Ada yang bisa kubantu?', false),
+  ];
+
+  Future<void> _kirim() async {
+    final teks = _input.text.trim();
+    if (teks.isEmpty) return;
+    _input.clear();
+
+    setState(() {
+      _pesan.add(_Pesan(teks, true));
+    });
+
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    final balasan = jawab(teks);
+    setState(() {
+      _pesan.add(_Pesan(balasan.teks, false));
+    });
+  
+    _keBawah();
+
+    if (balasan.url != null) {
+      await launchUrl(Uri.parse(balasan.url!),
+          mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _keBawah() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) {
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _input.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Moli'),
+        backgroundColor: Colors.black,
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                controller: _scroll,
+                padding: const EdgeInsets.all(12),
+                itemCount: _pesan.length,
+                itemBuilder: (_, i) {
+                  final m = _pesan[i];
+                  return Align(
+                    alignment:
+                        m.dariSaya ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.8),
+                      decoration: BoxDecoration(
+                        color: m.dariSaya ? Colors.white : Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        m.teks,
+                        style: TextStyle(
+                            color: m.dariSaya ? Colors.black : Colors.white),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _input,
+                      onSubmitted: (_) => _kirim(),
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        hintText: 'Ketik perintah...',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: _kirim,
+                    icon: const Icon(Icons.send),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
