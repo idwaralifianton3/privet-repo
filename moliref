@@ -1,0 +1,203 @@
+import 'dart:math';
+
+final Random _rng = Random();
+
+/// Ambil satu item acak dari daftar (pengganti random.choice).
+T acak<T>(List<T> daftar) => daftar[_rng.nextInt(daftar.length)];
+
+const List<String> sedih = [
+  "Tidak apa-apa kalau hari ini terasa berat. Kamu tidak harus menyelesaikan semuanya sekaligus.",
+  "Tarik napas pelan. Masalah yang besar pun bisa dihadapi sedikit demi sedikit.",
+  "Kamu sedang lelah, bukan berarti kamu gagal.",
+  "Hari yang buruk tidak berarti hidupmu buruk.",
+  "Tidak semua hal harus selesai hari ini.",
+  "Kamu boleh berhenti sebentar untuk mengumpulkan tenaga.",
+  "Perasaanmu valid, tetapi perasaan ini tidak akan selamanya seperti sekarang.",
+  "Kamu sudah melewati banyak hari sulit sebelumnya. Hari ini pun bisa kamu lewati.",
+  "Jangan menghukum dirimu karena sedang tidak baik-baik saja.",
+  "Satu langkah kecil tetap merupakan sebuah kemajuan.",
+  "Tidak perlu membandingkan perjalananmu dengan perjalanan orang lain.",
+  "Kadang yang kamu butuhkan bukan jawaban, tetapi waktu untuk bernapas.",
+  "Pelan-pelan saja. Kamu tidak sedang berlomba.",
+  "Kesalahanmu adalah bagian dari perjalanan, bukan seluruh identitasmu.",
+  "Masalah boleh datang, tetapi kamu tidak harus menghadapinya semuanya dalam satu waktu.",
+  "Kalau hari ini belum bisa kuat, cukup bertahan dan rawat dirimu dengan baik.",
+  "Kamu berhak mendapatkan kesempatan untuk memulai kembali.",
+  "Apa yang terjadi hari ini tidak menentukan seluruh masa depanmu.",
+  "Jangan biarkan satu kegagalan membuatmu melupakan semua hal yang sudah berhasil kamu lalui.",
+  "Kamu tidak harus selalu terlihat kuat di depan semua orang.",
+  "Istirahat bukan berarti menyerah.",
+  "Ada hari untuk berjuang dan ada hari untuk memulihkan diri.",
+  "Cobalah menyelesaikan satu hal kecil terlebih dahulu.",
+  "Tidak apa-apa jika prosesmu lebih lambat dari yang kamu harapkan.",
+  "Kamu masih punya kesempatan untuk memperbaiki banyak hal.",
+  "Saat pikiran terlalu ramai, kembali dulu pada hal-hal sederhana: bernapas, minum, makan, dan beristirahat.",
+  "Jangan mengambil keputusan besar ketika emosimu sedang sangat berat.",
+  "Beri dirimu waktu sebelum menyimpulkan bahwa semuanya akan buruk.",
+  "Kamu tidak sendirian dalam menghadapi masa-masa sulit.",
+  "Berbicara dengan orang yang kamu percaya bukan tanda kelemahan.",
+  "Kadang keberanian terlihat seperti tetap mencoba meskipun sedang takut.",
+  "Tidak semua masalah harus kamu pikul sendirian.",
+  "Kamu boleh menangis, lalu perlahan bangkit lagi.",
+  "Hari ini mungkin belum indah, tetapi masih bisa menjadi awal dari sesuatu yang lebih baik.",
+  "Jangan menyerah hanya karena hasilnya belum terlihat.",
+  "Kemajuan kecil yang tidak terlihat orang lain tetap berarti.",
+  "Kamu tidak harus menjadi sempurna untuk menjadi berharga.",
+  "Kesulitan hari ini bisa menjadi pengalaman yang membuatmu lebih matang.",
+  "Fokus pada apa yang masih bisa kamu lakukan, bukan hanya pada apa yang sudah hilang.",
+  "Kalau semuanya terasa terlalu banyak, pilih satu masalah untuk dihadapi terlebih dahulu.",
+  "Tidak apa-apa mengatakan, 'Aku sedang tidak baik-baik saja.'",
+  "Kamu pantas mendapatkan ketenangan setelah melewati hari yang melelahkan.",
+  "Jangan membuat penilaian permanen tentang hidupmu berdasarkan perasaan sementara.",
+  "Besok mungkin membawa keadaan yang berbeda.",
+  "Kamu boleh memulai lagi, bahkan jika sebelumnya sudah berkali-kali gagal.",
+  "Jaga dirimu sebagaimana kamu akan menjaga seseorang yang sedang kamu sayangi.",
+  "Masalah bukan bukti bahwa hidupmu gagal; masalah adalah sesuatu yang perlu dihadapi satu per satu.",
+];
+
+const List<String> curhat = [
+  "sabar ya, semua pasti berlalu",
+  "okeoke, aku paham, yang sabar ya",
+  "innallaha ma'asshabirin.. semangat",
+  "Aku di sini, kamu nggak harus menghadapi semuanya sendirian.",
+  "Nggak apa-apa kalau hari ini kamu merasa sedih. Perasaanmu valid.",
+  "Kamu sudah berusaha sejauh ini, dan itu bukan hal yang kecil.",
+  "Pelan-pelan saja, kamu nggak harus menyelesaikan semuanya hari ini.",
+  "Aku mungkin nggak bisa sepenuhnya merasakan yang kamu rasakan, tapi aku mau mendengarkan.",
+  "Kamu boleh istirahat sebentar. Istirahat bukan berarti menyerah.",
+  "Masa sulit ini nggak menentukan seluruh hidupmu.",
+  "Kalau kamu ingin cerita, ceritakan saja. Aku akan mendengarkan.",
+  "Kamu nggak perlu selalu terlihat kuat. Sesekali merasa lelah itu manusiawi.",
+  "Aku harap kamu bisa sedikit lebih lembut kepada dirimu sendiri hari ini.",
+  "Satu langkah kecil tetaplah sebuah langkah. Nggak harus langsung jauh.",
+  "Kadang kita memang perlu waktu untuk memahami apa yang sedang kita rasakan.",
+  "Terima kasih sudah mau cerita. Itu berarti kamu sedang berusaha menghadapi perasaanmu.",
+  "Apa pun yang terjadi hari ini, masih ada kesempatan untuk mencoba lagi besok.",
+  "Tarik napas pelan-pelan. Kita hadapi satu hal pada satu waktu.",
+  "Kamu berharga, bahkan ketika sedang merasa gagal atau tidak baik-baik saja.",
+  "Nggak apa-apa kalau kamu belum punya semua jawabannya sekarang.",
+  "Semoga setelah melewati hari yang berat ini, kamu menemukan sedikit ketenangan.",
+  "Aku percaya keadaan bisa berubah, meskipun sekarang mungkin belum terasa begitu.",
+  "Untuk sekarang, cukup bertahan melewati hari ini dengan perlahan. Kamu nggak harus buru-buru.",
+];
+
+const List<String> motivasi = [
+  "Albert Einstein: Hidup itu seperti mengendarai sepeda. Untuk menjaga keseimbangan, kamu harus terus bergerak.",
+  "Nelson Mandela: Itu selalu tampak mustahil sampai semuanya selesai.",
+  "Walt Disney: Semua impian kita dapat menjadi kenyataan jika kita memiliki keberanian untuk mengejarnya.",
+  "Steve Jobs: Satu-satunya cara melakukan pekerjaan hebat adalah mencintai apa yang kamu lakukan.",
+  "Helen Keller: Hidup adalah petualangan yang berani atau tidak sama sekali.",
+  "Theodore Roosevelt: Percayalah bahwa kamu bisa, dan kamu sudah setengah jalan.",
+  "Henry Ford: Apakah kamu berpikir bisa atau berpikir tidak bisa, kamu benar.",
+  "Winston Churchill: Kesuksesan bukanlah akhir, kegagalan bukanlah akhir; keberanian untuk melanjutkanlah yang penting.",
+  "Mahatma Gandhi: Jadilah perubahan yang ingin kamu lihat di dunia.",
+  "Michael Jordan: Saya telah gagal berkali-kali dalam hidup saya. Dan itulah sebabnya saya berhasil.",
+  "Oprah Winfrey: Tantangan adalah hadiah yang memaksa kita mencari pusat gravitasi baru.",
+  "Maya Angelou: Kamu mungkin tidak dapat mengendalikan semua kejadian, tetapi kamu dapat memutuskan untuk tidak dikurangi olehnya.",
+  "Confucius: Tidak masalah seberapa lambat kamu berjalan, selama kamu tidak berhenti.",
+  "Aristotle: Kita adalah apa yang kita lakukan berulang kali. Keunggulan, kemudian, bukanlah tindakan, tetapi kebiasaan.",
+  "Ralph Waldo Emerson: Apa yang ada di belakang kita dan apa yang ada di depan kita hanyalah hal kecil dibandingkan dengan apa yang ada di dalam diri kita.",
+  "Mark Twain: Rahasia untuk maju adalah memulai.",
+  "Thomas Edison: Banyak kegagalan dalam hidup adalah orang-orang yang tidak menyadari betapa dekatnya mereka dengan kesuksesan ketika mereka menyerah.",
+  "J.K. Rowling: Titik terendah menjadi fondasi yang kokoh untuk membangun kembali hidup saya.",
+  "Vince Lombardi: Perbedaan antara orang yang sukses dan orang lain bukanlah kurangnya kekuatan, tetapi kurangnya kemauan.",
+  "Muhammad Ali: Jangan hitung hari; jadikan hari-hari berarti.",
+  "Serena Williams: Keberhasilan setiap perempuan harus menjadi inspirasi bagi perempuan lain.",
+  "Bruce Lee: Tujuan tidak selalu harus dicapai; sering kali tujuan hanya berfungsi sebagai sesuatu untuk dituju.",
+  "Abraham Lincoln: Cara terbaik untuk memprediksi masa depan adalah menciptakannya.",
+  "C.S. Lewis: Kesulitan mempersiapkan orang biasa untuk sebuah takdir yang luar biasa.",
+  "Martin Luther King Jr.: Jika kamu tidak bisa terbang, berlarilah; jika tidak bisa berlari, berjalanlah; jika tidak bisa berjalan, merangkaklah—tetapi apa pun yang kamu lakukan, kamu harus terus bergerak maju.",
+  "Amelia Earhart: Hal tersulit adalah keputusan untuk bertindak; sisanya hanyalah ketekunan.",
+  "Leonardo da Vinci: Segala sesuatu yang dapat dibayangkan dapat diwujudkan.",
+  "Napoleon Bonaparte: Kemenangan adalah milik mereka yang paling gigih.",
+  "Stephen Hawking: Bagaimanapun sulitnya hidup, selalu ada sesuatu yang dapat kamu lakukan dan berhasil dalam hal itu.",
+  "Mother Teresa: Kemarin telah berlalu. Esok belum datang. Kita hanya memiliki hari ini. Mari kita mulai.",
+  "Kegagalan hari ini adalah pelajaran untuk kesuksesan besok.",
+  "Jangan menunggu kesempatan, ciptakan kesempatan itu sendiri.",
+  "Setiap langkah kecil membawamu lebih dekat ke tujuan.",
+  "Kesuksesan dimulai dari keberanian untuk memulai.",
+  "Percayalah pada dirimu, kamu lebih kuat dari yang kamu kira.",
+  "Hari ini sulit, tapi besok adalah kesempatan baru.",
+  "Bukan seberapa cepat, tapi seberapa konsisten kamu melangkah.",
+  "Fokus pada progres, bukan kesempurnaan.",
+  "Orang hebat bukan yang tidak pernah jatuh, tapi yang selalu bangkit.",
+  "Mimpi besar dimulai dari langkah kecil hari ini.",
+  "Kamu tidak harus sempurna, kamu hanya harus mencoba.",
+  "Waktu terbaik untuk mulai adalah sekarang.",
+  "Kerja keras mengalahkan bakat yang tidak diasah.",
+  "Setiap hari adalah kesempatan untuk jadi versi lebih baik.",
+  "Jangan bandingkan babak 1 kamu dengan babak 20 orang lain.",
+  "Kesulitan hari ini adalah kekuatan besokmu.",
+  "Tetap melangkah meski pelan, asal jangan berhenti.",
+  "Kamu sudah sejauh ini, jangan menyerah sekarang.",
+  "Ubah rasa takut menjadi bahan bakar semangat.",
+  "Konsistensi kecil setiap hari menghasilkan perubahan besar.",
+  "Percaya proses, hasil akan mengikuti.",
+  "Semua ahli dulunya adalah pemula.",
+  "Kamu tidak sendirian, teruslah melangkah.",
+  "Hari buruk bukan berarti hidup buruk.",
+  "Selalu ada cara, selama kamu tidak berhenti mencari.",
+];
+
+const List<String> hiburan = [
+  "Hmm... sepertinya kamu butuh sedikit hiburan.",
+  "Aku punya beberapa cerita lucu kalau kamu mau.",
+  "Tenang, jangan terlalu serius. Sesekali santai juga penting.",
+];
+
+const List<String> aktivitasPagi = [
+  "Aku sedang berenang pagi di kolam rumah.",
+  "Aku sedang stretching di halaman.",
+  "Aku sedang membuat kopi sambil menikmati suasana pagi.",
+  "Aku sedang jalan santai mengelilingi rumah.",
+];
+
+const List<String> aktivitasSiang = [
+  "Aku sedang berenang siang. Lumayan untuk menyegarkan badan.",
+  "Aku sedang latihan strength di gym.",
+  "Aku sedang makan siang di ruang makan.",
+  "Aku sedang membaca buku di ruang baca.",
+];
+
+const List<String> aktivitasMalam = [
+  "Aku sedang santai di balkon sambil menikmati suasana malam.",
+  "Aku sedang membaca buku di ruang baca.",
+  "Aku sedang duduk di dekat kolam.",
+  "Aku sedang stretching ringan sebelum istirahat.",
+];
+
+String aktivitas() {
+  final jam = DateTime.now().hour;
+  final List<String> daftar;
+  if (jam >= 5 && jam < 11) {
+    daftar = aktivitasPagi;
+  } else if (jam >= 11 && jam < 17) {
+    daftar = aktivitasSiang;
+  } else {
+    daftar = aktivitasMalam;
+  }
+  return acak(daftar);
+}
+
+const List<String> jawabanSapaan = [
+  "Hai juga! Senang kamu datang 😊",
+  "Hai! Aku di sini, siap menemani kamu hari ini.",
+  "Hai... akhirnya kamu menyapa juga. Ada cerita apa hari ini?",
+  "Hai! Semoga harimu berjalan dengan baik ya.",
+  "Hai! Welcome back, senang bisa ngobrol lagi.",
+  "Hai juga! Yuk, istirahat sebentar dan ngobrol santai.",
+  "Hai! Aku siap mendengarkan, mau cerita atau sekadar ngobrol juga boleh.",
+  "Hai 😊 Gimana kabarmu hari ini?",
+  "Hai! Senang melihat sapaanmu. Ada yang bisa kubantu?",
+  "Hai! Aku ada di sini. Ceritakan saja apa yang sedang kamu pikirkan.",
+  "Hai juga! Semoga hari ini ada hal kecil yang membuatmu tersenyum.",
+  "Hai! Yuk, mulai hari ini dengan energi yang baik.",
+  "Hai 😊 Mau ngobrol santai, belajar, atau mengerjakan sesuatu?",
+  "Hai! Aku siap menemani perjalanan kecilmu hari ini.",
+  "Hai juga! Tidak perlu buru-buru, kita ngobrol pelan-pelan saja.",
+  "Hai! Apa pun yang ingin kamu bahas, ayo kita mulai.",
+  "Hai 😊 Senang kamu mampir. Bagaimana harimu sejauh ini?",
+  "Hai! Aku siap jadi teman ngobrolmu kapan pun kamu butuh.",
+  "Hai juga! Yuk, bikin obrolan hari ini jadi sesuatu yang menyenangkan.",
+  "Hai! Selamat datang kembali. Ada sesuatu yang ingin kamu ceritakan?",
+];
